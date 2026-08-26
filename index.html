@@ -276,6 +276,7 @@
   </div>
 
   <div class="reset-row">
+    <button class="ghost sm" id="installBtn" hidden>📲 INSTALL APP</button>
     <button class="ghost sm" id="soundToggle">🔊 SOUND</button>
     <button class="ghost sm" id="openArchive">📜 ARCHIVE</button>
     <button class="ghost sm" id="resetDay">RESET DAY</button>
@@ -665,6 +666,26 @@ $("soundToggle").onclick = () => {
   $("soundToggle").textContent = soundOn ? "🔊 SOUND" : "🔇 MUTED";
   if (soundOn) blip(660, 0.08, "square", 0.07);
 };
+
+// ---- Manual install (captures beforeinstallprompt) ----
+let deferredPrompt = null;
+const installBtn = $("installBtn");
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBtn.hidden = false;
+});
+window.addEventListener("appinstalled", () => {
+  installBtn.hidden = true;
+  deferredPrompt = null;
+});
+installBtn.addEventListener("click", async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  try { await deferredPrompt.userChoice; } catch (e) {}
+  deferredPrompt = null;
+  installBtn.hidden = true;
+});
 
 // ---- PWA service worker ----
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
