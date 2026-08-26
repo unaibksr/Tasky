@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>CHORE QUEST</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<link rel="manifest" href="icon/site.webmanifest" />
+<meta name="theme-color" content="#07060f" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Chore Quest" />
+<link rel="icon" type="image/png" sizes="32x32" href="icon/favicon-32x32.png" />
+<link rel="icon" type="image/png" sizes="16x16" href="icon/favicon-16x16.png" />
+<link rel="apple-touch-icon" href="icon/apple-touch-icon.png" />
+<style>
+  :root {
+    --bg: #07060f;
+    --panel: #100d22;
+    --panel-2: #161232;
+    --ink: #e7f6ff;
+    --muted: #8a86b8;
+    --neon: #39ff14;
+    --neon2: #00f0ff;
+    --neon3: #ff2e97;
+    --gold: #ffe600;
+    --danger: #ff3b5c;
+    --px: "Press Start 2P", monospace;
+    --term: "VT323", "Courier New", monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  html { -webkit-text-size-adjust: 100%; }
+  button, input, select { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  button { -webkit-user-select: none; user-select: none; }
+  body {
+    margin: 0; color: var(--ink); font-family: var(--term); font-size: 20px;
+    background:
+      radial-gradient(900px 500px at 15% -5%, rgba(0,240,255,.18), transparent 55%),
+      radial-gradient(800px 500px at 90% 0%, rgba(255,46,151,.16), transparent 55%),
+      radial-gradient(700px 700px at 50% 120%, rgba(57,255,20,.12), transparent 60%),
+      var(--bg);
+    background-attachment: fixed; min-height: 100vh;
+    -webkit-font-smoothing: none;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 1;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,.28) 0 1px, transparent 1px 3px);
+    opacity: .35;
+  }
+  .wrap { position: relative; z-index: 2; max-width: 720px; margin: 0 auto; padding: 34px 16px calc(90px + env(safe-area-inset-bottom)); padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+
+  header { text-align: center; margin-bottom: 22px; }
+  .brand {
+    font-family: var(--px); font-size: 26px; line-height: 1.4; margin: 0;
+    color: #fff; text-shadow: 0 0 8px var(--neon), 0 0 18px var(--neon), 3px 3px 0 #063b02;
+    letter-spacing: 1px;
+  }
+  .brand .star { color: var(--gold); text-shadow: 0 0 8px var(--gold), 0 0 18px var(--gold); }
+  .subtitle { color: var(--neon2); margin-top: 12px; font-size: 19px; letter-spacing: 1px; text-shadow: 0 0 6px rgba(0,240,255,.5); }
+
+  .score {
+    position: relative; margin: 22px auto 8px; max-width: 360px; text-align: center;
+    background: linear-gradient(180deg, #0c0a1c, #08060f);
+    border: 3px solid var(--gold);
+    box-shadow: 0 0 14px var(--gold), inset 0 0 18px rgba(255,230,0,.18);
+    border-radius: 6px; padding: 18px 18px 20px;
+  }
+  .score .lbl { font-family: var(--px); font-size: 11px; letter-spacing: 2px; color: var(--gold); text-shadow: 0 0 8px rgba(255,230,0,.7); }
+  .score .val {
+    font-family: var(--px); font-size: 40px; margin-top: 10px; color: #fff;
+    text-shadow: 0 0 10px var(--neon), 0 0 22px var(--neon); font-variant-numeric: tabular-nums;
+  }
+  .score .val.bump { animation: pop .4s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes pop { 0%{transform:scale(1)} 40%{transform:scale(1.16)} 100%{transform:scale(1)} }
+
+  .card {
+    background: var(--panel); border: 3px solid #2a2550; border-radius: 6px;
+    padding: 18px; margin-top: 22px; box-shadow: 0 0 0 3px #07060f, 0 10px 0 #050409;
+  }
+  .card h2 {
+    margin: 0 0 16px; font-family: var(--px); font-size: 13px; letter-spacing: 1px; color: var(--neon2);
+    text-shadow: 0 0 8px rgba(0,240,255,.5);
+  }
+
+  form.add { display: grid; grid-template-columns: 1fr 1fr 110px auto; gap: 10px; }
+  form.add.cat { grid-template-columns: 1fr auto; margin-top: 10px; }
+  @media (max-width: 600px) { form.add, form.add.cat { grid-template-columns: 1fr; } }
+
+  input, select {
+    font-family: var(--term); font-size: 20px; border-radius: 4px;
+    border: 2px solid #3a3470; background: #0a0820; color: var(--ink);
+    padding: 11px 12px; outline: none; transition: border-color .12s, box-shadow .12s;
+  }
+  input::placeholder { color: #5b5688; }
+  input:focus, select:focus { border-color: var(--neon); box-shadow: 0 0 10px rgba(57,255,20,.5); }
+  select option { background: #0a0820; }
+
+  button {
+    font-family: var(--px); font-size: 12px; border-radius: 4px; cursor: pointer;
+    border: 3px solid #000; background: var(--neon); color: #06210a;
+    padding: 13px 14px; box-shadow: 4px 4px 0 #000; transition: transform .06s, box-shadow .06s, filter .12s;
+  }
+  button:hover { filter: brightness(1.1); }
+  button:active { transform: translate(4px,4px); box-shadow: 0 0 0 #000; }
+  button.ghost { background: #1c1840; color: var(--neon2); border-color: #000; box-shadow: 4px 4px 0 #000; }
+  button.danger { background: var(--danger); color: #fff; }
+  button.sm { font-size: 11px; padding: 10px 12px; }
+
+  .hint { color: var(--muted); font-size: 17px; margin: 12px 0 0; }
+
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .chip {
+    cursor: pointer; padding: 7px 13px; border-radius: 4px; font-family: var(--term); font-size: 18px;
+    background: #120f2c; border: 2px solid #322c5e; color: var(--muted); transition: all .12s;
+  }
+  .chip:hover { color: var(--ink); border-color: var(--neon2); }
+  .chip.active { background: var(--neon2); color: #04222b; border-color: #000; box-shadow: 0 0 12px rgba(0,240,255,.6); font-weight: 700; }
+  .cdot { width: 9px; height: 9px; border-radius: 2px; box-shadow: 0 0 8px currentColor; display: inline-block; }
+
+  .group-title {
+    display: flex; align-items: center; gap: 9px; margin: 18px 0 10px;
+    font-family: var(--px); font-size: 11px; letter-spacing: 1px; color: var(--muted); text-transform: uppercase;
+  }
+  .group-title .dot { width: 12px; height: 12px; border-radius: 2px; box-shadow: 0 0 10px currentColor; }
+
+  .chores { display: grid; gap: 11px; }
+  .chore {
+    display: flex; align-items: center; gap: 13px; padding: 13px 15px;
+    background: var(--panel-2); border: 2px solid #2f2a5c; border-left: 5px solid transparent; border-radius: 4px;
+    cursor: pointer; transition: transform .08s, border-color .12s, box-shadow .12s, background .12s;
+    animation: enter .3s steps(4) both;
+  }
+  @keyframes enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .chore:hover { border-color: var(--neon); box-shadow: 0 0 14px rgba(57,255,20,.35); transform: translateY(-1px); }
+  .chore:active { transform: scale(.99); }
+  .chore .info { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .chore .name { font-size: 21px; font-weight: 700; letter-spacing: .5px; }
+  .cat-tag { align-self: flex-start; font-family: var(--term); font-size: 15px; letter-spacing: 1px; text-transform: uppercase; padding: 1px 9px; border-radius: 3px; }
+  .chore .check {
+    width: 30px; height: 30px; border-radius: 3px; border: 3px solid #4a4480;
+    display: grid; place-items: center; flex: 0 0 auto; color: transparent; font-weight: 800; font-family: var(--px); font-size: 12px;
+  }
+  .chore.done { background: #0c2415; border-color: var(--neon); box-shadow: 0 0 16px rgba(57,255,20,.4); }
+  .chore.done .check { background: var(--neon); border-color: #000; color: #06210a; box-shadow: 0 0 10px var(--neon); }
+  .chore.done .name { text-decoration: line-through; color: var(--muted); }
+  .chore .pts {
+    font-family: var(--px); font-size: 11px; color: var(--gold);
+    background: #1c1700; border: 2px solid var(--gold); padding: 7px 9px; border-radius: 3px;
+    text-shadow: 0 0 6px rgba(255,230,0,.6); white-space: nowrap;
+  }
+  .chore .act { display: flex; gap: 7px; }
+
+  .empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 36px 12px; text-align: center; }
+  .empty .eicon { font-size: 46px; filter: drop-shadow(0 0 10px var(--neon2)); }
+  .empty .etext { color: var(--muted); font-size: 20px; line-height: 1.4; }
+  .empty button { margin-top: 4px; }
+
+  .reset-row { margin-top: 24px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+  .fab {
+    position: fixed; right: calc(22px + env(safe-area-inset-right)); bottom: calc(22px + env(safe-area-inset-bottom));
+    width: 64px; height: 64px; z-index: 40;
+    border-radius: 8px; border: 4px solid #000; cursor: pointer;
+    background: var(--gold); color: #2a1f00; font-family: var(--px); font-size: 30px; line-height: 1;
+    box-shadow: 0 0 18px var(--gold), 5px 5px 0 #000; display: grid; place-items: center;
+    transition: transform .08s, box-shadow .08s, filter .12s;
+  }
+  .fab:hover { filter: brightness(1.08); }
+  .fab:active { transform: translate(5px,5px); box-shadow: 0 0 10px var(--gold), 0 0 0 #000; }
+
+  .modal-back {
+    position: fixed; inset: 0; z-index: 50; display: none;
+    background: rgba(3,2,10,.78); backdrop-filter: blur(2px);
+    align-items: center; justify-content: center; padding: 18px;
+  }
+  .modal-back.open { display: flex; animation: fade .18s ease; }
+  @keyframes fade { from { opacity: 0 } to { opacity: 1 } }
+  .modal {
+    width: 100%; max-width: 400px; background: var(--panel); border: 3px solid var(--neon2);
+    border-radius: 6px; padding: 22px; box-shadow: 0 0 22px rgba(0,240,255,.5), 0 0 0 4px #050409;
+    animation: rise .22s ease;
+  }
+  @keyframes rise { from { transform: translateY(16px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+  .modal h3 { margin: 0 0 18px; font-family: var(--px); font-size: 15px; color: var(--gold); text-shadow: 0 0 8px rgba(255,230,0,.6); }
+  .modal .field { display: grid; gap: 6px; margin-bottom: 14px; }
+  .modal label { font-family: var(--px); font-size: 10px; color: var(--neon2); letter-spacing: 1px; }
+  .stepper { display: flex; gap: 8px; align-items: stretch; }
+  .stepper input { flex: 1; text-align: center; }
+  .stepper button { font-size: 12px; padding: 0 14px; }
+  .modal .actions { display: flex; gap: 12px; margin-top: 8px; }
+  .modal .actions button { flex: 1; }
+
+  .arc-day { margin-bottom: 14px; }
+  .arc-day .dh {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: var(--px); font-size: 10px; color: var(--neon2);
+    text-shadow: 0 0 8px rgba(0,240,255,.5); margin-bottom: 8px;
+    border-bottom: 2px dashed #2a2550; padding-bottom: 6px;
+  }
+  .arc-day .dh .dtot { color: var(--gold); text-shadow: 0 0 8px rgba(255,230,0,.6); }
+  .arc-row {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px; margin-bottom: 6px;
+    background: var(--panel-2); border: 2px solid #2a2550; border-left: 4px solid var(--neon);
+    border-radius: 4px; font-size: 18px;
+  }
+  .arc-row .an { flex: 1; }
+  .arc-row .ac { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; opacity: .8; }
+  .arc-row .ap { font-family: var(--px); font-size: 10px; color: var(--gold); }
+  .arc-empty { text-align: center; color: var(--muted); padding: 30px 10px; font-size: 19px; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%) translateY(24px);
+    font-family: var(--px); font-size: 12px; color: #06210a; padding: 13px 18px; border-radius: 4px;
+    background: var(--neon); border: 3px solid #000; box-shadow: 0 0 18px var(--neon), 4px 4px 0 #000;
+    opacity: 0; pointer-events: none; transition: all .3s ease; z-index: 55;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .confetti {
+    position: fixed; z-index: 60; width: 10px; height: 10px; pointer-events: none;
+    transform: translate(-50%,-50%); animation: burst .85s cubic-bezier(.2,.7,.3,1) forwards;
+  }
+  @keyframes burst {
+    0% { opacity: 1; transform: translate(-50%,-50%) rotate(0); }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--rot)); }
+  }
+
+  @media (max-width: 560px) {
+    .brand { font-size: 20px; }
+    .score { max-width: 100%; }
+    .score .val { font-size: 34px; }
+    .card { padding: 15px; margin-top: 18px; }
+    .chore { gap: 10px; padding: 12px; }
+    .chore .name { font-size: 19px; }
+    .chore .pts { font-size: 9px; padding: 6px 7px; }
+    .chore .act { flex-direction: column; gap: 4px; }
+    .chore .act button { padding: 6px 9px; }
+    .reset-row { gap: 10px; }
+    .reset-row button { flex: 1 1 auto; }
+    .modal { padding: 18px; }
+    .modal h3 { font-size: 13px; }
+    .fab { width: 58px; height: 58px; font-size: 26px; }
+  }
+  @media (max-width: 380px) {
+    .brand { font-size: 17px; }
+    .chore .act { display: none; }
+    .chore .pts { margin-left: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><span class="star">★</span> CHORE QUEST</div>
+    <div class="subtitle">TAP A CHORE &middot; EARN POINTS</div>
+  </header>
+
+  <div class="score">
+    <div class="lbl">SCORE</div>
+    <div class="val" id="totalPoints">0</div>
+  </div>
+
+  <div class="card">
+    <h2>TODAY'S CHORES</h2>
+    <div class="filters" id="filters"></div>
+    <div id="list"></div>
+    <div class="empty" id="emptyState" hidden>
+      <div class="eicon">🕹️</div>
+      <div class="etext">NO CHORES YET.<br>PRESS + TO START THE QUEST!</div>
+      <button class="ghost sm" id="emptyAdd">+ ADD CHORE</button>
+    </div>
+  </div>
+
+  <div class="reset-row">
+    <button class="ghost sm" id="soundToggle">🔊 SOUND</button>
+    <button class="ghost sm" id="openArchive">📜 ARCHIVE</button>
+    <button class="ghost sm" id="resetDay">RESET DAY</button>
+    <button class="danger sm" id="clearAll">CLEAR ALL</button>
+  </div>
+</div>
+
+<button class="fab" id="fab" title="Add chore" aria-label="Add chore">+</button>
+
+<div class="modal-back" id="modalBack">
+  <div class="modal">
+    <h3>✚ NEW CHORE</h3>
+    <div class="field">
+      <label for="mName">NAME</label>
+      <input id="mName" type="text" placeholder="e.g. Wash dishes" />
+    </div>
+    <div class="field">
+      <label for="mCat">CATEGORY</label>
+      <select id="mCat"></select>
+    </div>
+    <div class="field">
+      <label for="mNewCat">OR NEW CATEGORY</label>
+      <input id="mNewCat" type="text" placeholder="e.g. Kitchen" />
+    </div>
+    <div class="field">
+      <label for="mPts">POINTS</label>
+      <div class="stepper">
+        <button type="button" class="ghost sm" id="mMinus">−10</button>
+        <input id="mPts" type="number" min="1" value="10" />
+        <button type="button" class="sm" id="mPlus">+10</button>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="ghost" id="mCancel">CANCEL</button>
+      <button id="mSave">ADD</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-back" id="archiveBack">
+  <div class="modal" style="max-width:460px">
+    <h3>📜 ARCHIVE</h3>
+    <div id="archiveList" style="max-height:62vh;overflow:auto;margin:-4px -4px 0;padding:4px"></div>
+    <div class="actions">
+      <button id="archiveClose">CLOSE</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const STORE_KEY = "choreQuest.v1";
+const CAT_COLORS = ["#39ff14","#00f0ff","#ff2e97","#ffe600","#b14eff","#ff7b00","#00ffa3","#ff4d4d"];
+
+let state = load();
+if (!state.catV) {
+  state.categories = ["General", "Abu", "Home", "Myself", "Uncle"];
+  state.catV = 1;
+}
+if (!Array.isArray(state.history)) state.history = [];
+save();
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return {
+    chores: [],
+    categories: ["General", "Abu", "Home", "Myself", "Uncle"],
+    totalPoints: 0,
+    history: [],
+    todayDone: {},
+    todayKey: todayStr()
+  };
+}
+function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+}
+function rolloverDay() {
+  if (state.todayKey !== todayStr()) {
+    state.todayKey = todayStr();
+    state.todayDone = {};
+    save();
+  }
+}
+function catColor(cat) {
+  let i = state.categories.indexOf(cat);
+  if (i < 0) { state.categories.push(cat); i = state.categories.length - 1; }
+  return CAT_COLORS[i % CAT_COLORS.length];
+}
+function hexA(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+}
+function showToast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove("show"), 1400);
+}
+
+let filter = "All";
+const sessionSeen = new Set();
+
+function renderFilters() {
+  const f = $("filters");
+  f.innerHTML = "";
+  ["All", ...state.categories].forEach(c => {
+    const el = document.createElement("span");
+    el.className = "chip" + (filter === c ? " active" : "");
+    if (c !== "All") {
+      const dot = document.createElement("span");
+      dot.className = "cdot"; const col = catColor(c);
+      dot.style.background = col; dot.style.color = col;
+      el.appendChild(dot);
+    }
+    el.appendChild(document.createTextNode(" " + c));
+    el.onclick = () => { filter = c; render(); };
+    f.appendChild(el);
+  });
+}
+function render() {
+  rolloverDay();
+  renderFilters();
+
+  const list = $("list");
+  list.innerHTML = "";
+  let chores = state.chores;
+  if (filter !== "All") chores = chores.filter(c => c.category === filter);
+
+  const byCat = {};
+  chores.forEach(c => { (byCat[c.category] ||= []).push(c); });
+
+  $("emptyState").hidden = chores.length > 0;
+
+  Object.keys(byCat).forEach(cat => {
+    const title = document.createElement("div");
+    title.className = "group-title";
+    const col = catColor(cat);
+    title.innerHTML = `<span class="dot" style="background:${col};color:${col}"></span>${cat}`;
+    list.appendChild(title);
+
+    const wrap = document.createElement("div");
+    wrap.className = "chores";
+    byCat[cat].forEach(ch => wrap.appendChild(choreEl(ch)));
+    list.appendChild(wrap);
+  });
+
+  animateNumber($("totalPoints"), state.totalPoints);
+  save();
+}
+
+function choreEl(ch) {
+  const done = !!state.todayDone[ch.id];
+  const col = catColor(ch.category);
+  const el = document.createElement("div");
+  el.className = "chore" + (done ? " done" : "");
+  if (!sessionSeen.has(ch.id)) { el.classList.add("enter"); sessionSeen.add(ch.id); }
+  el.style.borderLeftColor = col;
+
+  const check = document.createElement("div");
+  check.className = "check"; check.textContent = "✓";
+
+  const info = document.createElement("div");
+  info.className = "info";
+  const name = document.createElement("div");
+  name.className = "name"; name.textContent = ch.name;
+  const tag = document.createElement("span");
+  tag.className = "cat-tag"; tag.textContent = ch.category;
+  tag.style.color = col; tag.style.background = hexA(col, .18);
+  info.append(name, tag);
+
+  const pts = document.createElement("div");
+  pts.className = "pts"; pts.textContent = "+" + ch.points;
+
+  const act = document.createElement("div");
+  act.className = "act";
+  const del = document.createElement("button");
+  del.className = "danger sm"; del.textContent = "✕"; del.title = "Delete";
+  del.onclick = (e) => { e.stopPropagation(); deleteChore(ch.id); };
+  act.appendChild(del);
+
+  el.append(check, info, pts, act);
+  el.onclick = () => toggleChore(ch.id);
+  return el;
+}
+
+function bumpScore() {
+  const v = $("totalPoints");
+  v.classList.remove("bump"); void v.offsetWidth; v.classList.add("bump");
+}
+function animateNumber(el, to) {
+  const from = parseInt((el.textContent || "0").replace(/[^0-9]/g, "")) || 0;
+  if (from === to) { el.textContent = to; return; }
+  const dur = 480, start = performance.now();
+  function step(t) {
+    const k = Math.min(1, (t - start) / dur);
+    const e = 1 - Math.pow(1 - k, 3);
+    el.textContent = Math.round(from + (to - from) * e);
+    if (k < 1) requestAnimationFrame(step); else el.textContent = to;
+  }
+  requestAnimationFrame(step);
+}
+function burst() {
+  const card = document.querySelector(".score");
+  const r = card.getBoundingClientRect();
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  for (let i = 0; i < 26; i++) {
+    const p = document.createElement("div");
+    p.className = "confetti";
+    p.style.left = cx + "px"; p.style.top = cy + "px";
+    p.style.background = CAT_COLORS[i % CAT_COLORS.length];
+    const ang = Math.random() * Math.PI * 2;
+    const dist = 70 + Math.random() * 110;
+    p.style.setProperty("--dx", (Math.cos(ang) * dist) + "px");
+    p.style.setProperty("--dy", (Math.sin(ang) * dist - 50) + "px");
+    p.style.setProperty("--rot", (Math.random() * 720 - 360) + "deg");
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 880);
+  }
+}
+
+function addChore(name, cat, points) {
+  state.chores.push({ id: Date.now() + "_" + Math.random().toString(36).slice(2,7), name, category: cat, points });
+  render();
+}
+function toggleChore(id) {
+  const ch = state.chores.find(c => c.id === id);
+  if (!ch) return;
+  if (state.todayDone[id]) {
+    const uid = state.todayDone[id];
+    if (uid) state.history = state.history.filter(h => h.uid !== uid);
+    state.todayDone[id] = false;
+    state.totalPoints = Math.max(0, state.totalPoints - ch.points);
+    showToast("−" + ch.points);
+    blip(200, 0.12, "sawtooth", 0.06);
+  } else {
+    const uid = Date.now() + "_" + Math.random().toString(36).slice(2, 7);
+    state.todayDone[id] = uid;
+    state.history.push({ uid, choreId: id, name: ch.name, category: ch.category, points: ch.points, date: state.todayKey });
+    state.totalPoints += ch.points;
+    showToast("+" + ch.points + " PTS!");
+    bumpScore();
+    burst();
+    scoreSound();
+  }
+  render();
+}
+function deleteChore(id) {
+  state.chores = state.chores.filter(c => c.id !== id);
+  delete state.todayDone[id];
+  render();
+}
+function resetDay() { state.todayDone = {}; render(); showToast("DAY RESET"); }
+function clearAll() {
+  if (!confirm("Delete all chores? This cannot be undone.")) return;
+  state.chores = []; state.todayDone = {}; render();
+}
+
+$("resetDay").onclick = resetDay;
+$("clearAll").onclick = clearAll;
+
+// ---- Floating "+" button + modal ----
+const fab = $("fab"), modalBack = $("modalBack");
+function fillModalCats() {
+  const sel = $("mCat"); sel.innerHTML = "";
+  state.categories.forEach(c => {
+    const o = document.createElement("option"); o.value = c; o.textContent = c; sel.appendChild(o);
+  });
+}
+function openModal() { fillModalCats(); modalBack.classList.add("open"); $("mName").focus(); }
+function closeModal() { modalBack.classList.remove("open"); $("mName").value = ""; $("mNewCat").value = ""; $("mPts").value = 10; }
+fab.onclick = openModal;
+if ($("emptyAdd")) $("emptyAdd").onclick = openModal;
+$("mCancel").onclick = closeModal;
+modalBack.onclick = (e) => { if (e.target === modalBack) closeModal(); };
+$("mSave").onclick = () => {
+  const name = $("mName").value.trim();
+  const pts = parseInt($("mPts").value, 10);
+  if (!name || !pts || pts < 1) { $("mName").focus(); return; }
+  let cat = $("mCat").value;
+  const nc = $("mNewCat").value.trim();
+  if (nc) {
+    if (!state.categories.includes(nc)) state.categories.push(nc);
+    cat = nc;
+  }
+  addChore(name, cat, pts);
+  closeModal();
+};
+
+$("mPlus").onclick = () => { const i = $("mPts"); i.value = Math.max(1, (parseInt(i.value, 10) || 0) + 10); };
+$("mMinus").onclick = () => { const i = $("mPts"); i.value = Math.max(1, (parseInt(i.value, 10) || 0) - 10); };
+
+// ---- Archive (history) ----
+const archiveBack = $("archiveBack");
+function colorFor(cat) {
+  let i = state.categories.indexOf(cat);
+  if (i < 0) i = 0;
+  return CAT_COLORS[i % CAT_COLORS.length];
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+}
+function fmtDate(key) {
+  const [y, m, d] = key.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+}
+function renderArchive() {
+  const list = $("archiveList");
+  list.innerHTML = "";
+  if (!state.history.length) {
+    list.innerHTML = '<div class="arc-empty">NO HISTORY YET.</div>';
+    return;
+  }
+  const byDate = {};
+  state.history.forEach(h => { (byDate[h.date] ||= []).push(h); });
+  Object.keys(byDate).sort().reverse().forEach(date => {
+    const entries = byDate[date];
+    const total = entries.reduce((s, h) => s + h.points, 0);
+    const day = document.createElement("div");
+    day.className = "arc-day";
+    const dh = document.createElement("div");
+    dh.className = "dh";
+    dh.innerHTML = `<span>${fmtDate(date)}</span><span class="dtot">+${total}</span>`;
+    day.appendChild(dh);
+    entries.forEach(h => {
+      const col = colorFor(h.category);
+      const row = document.createElement("div");
+      row.className = "arc-row";
+      row.style.borderLeftColor = col;
+      row.innerHTML = `<div class="an">${escapeHtml(h.name)}<div class="ac" style="color:${col}">${escapeHtml(h.category)}</div></div><div class="ap">+${h.points}</div>`;
+      day.appendChild(row);
+    });
+    list.appendChild(day);
+  });
+}
+$("openArchive").onclick = () => { renderArchive(); archiveBack.classList.add("open"); };
+$("archiveClose").onclick = () => archiveBack.classList.remove("open");
+archiveBack.onclick = (e) => { if (e.target === archiveBack) archiveBack.classList.remove("open"); };
+
+// ---- Sound effects (Web Audio, no files needed) ----
+let actx = null;
+let soundOn = true;
+function audio() {
+  if (!actx) {
+    try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; }
+  }
+  if (actx && actx.state === "suspended") actx.resume();
+  return actx;
+}
+function blip(freq, dur, type, vol) {
+  if (!soundOn) return;
+  const ac = audio();
+  if (!ac) return;
+  const o = ac.createOscillator();
+  const g = ac.createGain();
+  o.type = type || "square";
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, ac.currentTime);
+  g.gain.linearRampToValueAtTime(vol || 0.05, ac.currentTime + 0.006);
+  g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + dur);
+  o.connect(g); g.connect(ac.destination);
+  o.start();
+  o.stop(ac.currentTime + dur + 0.02);
+}
+function scoreSound() {
+  blip(523, 0.08, "square", 0.07);
+  setTimeout(() => blip(784, 0.12, "square", 0.07), 70);
+  setTimeout(() => blip(1046, 0.14, "square", 0.07), 150);
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (!soundOn) return;
+  if (b.id === "mSave" || b.id === "fab" || b.id === "emptyAdd") blip(660, 0.09, "square", 0.07);
+  else if (b.classList.contains("danger")) blip(170, 0.13, "sawtooth", 0.06);
+  else blip(440, 0.06, "square", 0.05);
+});
+$("soundToggle").onclick = () => {
+  soundOn = !soundOn;
+  $("soundToggle").textContent = soundOn ? "🔊 SOUND" : "🔇 MUTED";
+  if (soundOn) blip(660, 0.08, "square", 0.07);
+};
+
+// ---- PWA service worker ----
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
+
+render();
+</script>
+</body>
+</html>

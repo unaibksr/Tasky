@@ -1,0 +1,10 @@
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
