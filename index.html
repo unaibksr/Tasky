@@ -160,6 +160,11 @@
   .empty button { margin-top: 4px; }
 
   .reset-row { margin-top: 24px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .install-hint {
+    margin-top: 16px; text-align: center; font-size: 15px; line-height: 1.5; color: var(--muted);
+    background: var(--panel); border: 1px dashed var(--glass-brd); border-radius: 8px; padding: 11px 14px;
+  }
+  .install-hint b { color: var(--neon2); }
 
   .fab {
     position: fixed; right: calc(22px + env(safe-area-inset-right)); bottom: calc(22px + env(safe-area-inset-bottom));
@@ -282,6 +287,8 @@
     <button class="ghost sm" id="resetDay">RESET DAY</button>
     <button class="danger sm" id="clearAll">CLEAR ALL</button>
   </div>
+
+  <div id="installHint" class="install-hint" hidden></div>
 </div>
 
 <button class="fab" id="fab" title="Add chore" aria-label="Add chore">+</button>
@@ -686,6 +693,20 @@ installBtn.addEventListener("click", async () => {
   deferredPrompt = null;
   installBtn.hidden = true;
 });
+
+const isTouch = ("ontouchstart" in window) || navigator.maxTouchPoints > 0;
+if (isTouch) {
+  setTimeout(() => {
+    if (installBtn.hidden && !window.matchMedia("(display-mode: standalone)").matches) {
+      const ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      const hint = $("installHint");
+      hint.innerHTML = ios
+        ? "📱 <b>iPhone:</b> tap Share ⤴ &rarr; <b>Add to Home Screen</b>."
+        : "📱 <b>Android:</b> tap the <b>INSTALL APP</b> button above, or the install icon in the address bar.";
+      hint.hidden = false;
+    }
+  }, 1500);
+}
 
 // ---- PWA service worker ----
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
